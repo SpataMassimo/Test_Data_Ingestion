@@ -1,0 +1,32 @@
+version: '3.3'
+
+services:
+    httpd:
+        build: ../httpd/
+        ports:
+             - "80:80"
+        volumes:
+            - ./twit_logs:/usr/local/apache2/htdocs
+    logstash:
+        image: docker.elastic.co/logstash/logstash:8.1.0
+        volumes:
+            - ./pipeline:/usr/share/logstash/pipeline
+            - ./twit_logs:/usr/share/logstash/nuovofile
+        networks:
+            tap:
+                ipv4_address: 10.0.100.10
+        depends_on:
+            - fluentd
+    fluentd:
+        image: fluent/fluentd:edge-debian
+        ports:
+            - "24224:24224"
+        volumes: 
+            - ./fluentd/conf:/fluentd/etc
+        command: -c /fluentd/etc/helloworld.conf
+        networks:
+            tap:
+                ipv4_address: 10.0.100.11
+networks:
+    tap:
+        external: true
